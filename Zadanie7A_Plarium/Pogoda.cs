@@ -4,20 +4,21 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Xml.Serialization;
 
 namespace Zadanie7A_Plarium
 {
     [Serializable]
-    class Pogoda:DataBase
+    class Pogoda
     {
-        
+        [XmlAttribute("Region")]
         public Region reg { get; set; }
+        [XmlAttribute("Data")]
         public DateTime date;
+        [XmlAttribute("Temperatyre")]
         public decimal temp;
+        [XmlElement("Osad")]
         public string osad;
-       
-        public Pogoda[] pogodas;
-
 
         public delegate void AccountHandler(string message);
         private event AccountHandler _notify;
@@ -42,24 +43,13 @@ namespace Zadanie7A_Plarium
             temp = T;
             osad = Osad;
         }
-        public IEnumerator GetEnumerator()
-        {
-            for (int i = 0; i < pogodas.Length; i++)
-            {
-                yield return pogodas[i];
-            }
-        }
-        public void Add(Pogoda pogoda)
-        {
-            pogodas = pogodas.Concat(new Pogoda[] { pogoda }).ToArray();
-            AddToBase(pogoda);
-        }
+            
         public Pogoda()
         {
-            pogodas = new Pogoda[] { };
+           
 
         }
-        public void GetPogoda(Pogoda vezers, Region region)
+        public void GetPogoda(List<Pogoda> vezers, Region region)
         {
             foreach (Pogoda pogoda in vezers)
                 if (pogoda.reg.Nazva == region.Nazva)
@@ -68,15 +58,13 @@ namespace Zadanie7A_Plarium
                 }
 
         }
-
-        public void GetData(Pogoda vezers, Region region, string osadki, decimal zTemp)
+        public void GetData(List<Pogoda> vezers, Region region, string osadki, decimal zTemp)
         {
             foreach (Pogoda pogoda in vezers)
                 if (pogoda.reg.Nazva == region.Nazva && pogoda.osad == osadki && zTemp > pogoda.temp)
                     _notify?.Invoke($" {pogoda.date} числа {pogoda.reg.GetInfo()}, температура {pogoda.temp + "°C"} была меньше заданной {zTemp + "°C"}, и были заданные осадки:{pogoda.osad}");
         }
-
-        public void GetPogoda(Pogoda vezers, string Lang)
+        public void GetPogoda(List<Pogoda> vezers, string Lang)
         {
 
             foreach (Pogoda pogoda in vezers)
@@ -87,11 +75,10 @@ namespace Zadanie7A_Plarium
                 }
             }
         }
-
-        public void GetTemp(Pogoda vezers, int Zplochad, Dictionary<int, Region> regions)
+        public void GetTemp(List<Pogoda> vezers, int Zplochad, List< Region> regions)
         {
             decimal srTemp = 0;
-            foreach (Region region in regions.Values)
+            foreach (Region region in regions)
             {
                 try
                 {
@@ -108,23 +95,11 @@ namespace Zadanie7A_Plarium
             }
 
         }
-
         public override string ToString()
         {
-            return $"Регион:\n{reg.GetInfo()}\nДата:\n{date}\nТемпература: {temp + "°C"}\nОсодки: {osad}\n";
+            return $"Регион:\n{reg.GetInfo()}\nДата:\n{date}\nТемпература:\n{temp}\nОсодки:\n{osad}\n";
         }
-
-        private void AddToBase(Pogoda pogoda)
-        {
-            using (System.IO.StreamWriter file = new System.IO.StreamWriter("Pogoda.txt", true))
-            {
-               
-                    file.WriteLine(pogoda.ToString()); 
-                
-                file.Close();
-            }
-        }
-
+  
         public void Cleener()
         {
             System.IO.File.WriteAllBytes("Pogoda.txt", new byte[0]);

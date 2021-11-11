@@ -3,14 +3,18 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Xml.Serialization;
 
 namespace Zadanie7A_Plarium
 {
     [Serializable]
-    abstract class Region:DataBase
+    abstract class Region
     {
+        [XmlElement("Name")]
         public string Nazva;
+        [XmlAttribute("Value")]
         public int Plochad;
+        [XmlAttribute("People")]
         public People people;
 
         public Region(string Name, int plochad, People person)
@@ -18,21 +22,12 @@ namespace Zadanie7A_Plarium
             Nazva = Name;
             Plochad = plochad;
             people = person;
-            using (System.IO.StreamWriter file = new System.IO.StreamWriter("Region.txt", true))
-            {
-
-                file.WriteLine($"Регион:\n{Nazva}\nПлощадь:\n{Plochad}\nЛюди: {people.Nazvanie}\n");
-
-                file.Close();
-            }
+         
 
 
         }
 
-        public void Cleener()
-        {
-            System.IO.File.WriteAllBytes("Region.txt", new byte[0]);
-        }
+      
 
         public abstract string GetInfo();
 
@@ -45,7 +40,7 @@ namespace Zadanie7A_Plarium
         }
         public override string GetInfo()
         {
-            return $"В областе {Nazva} ";
+            return $"{Nazva}";
         }
     }
 
@@ -59,7 +54,7 @@ namespace Zadanie7A_Plarium
         
         public override string GetInfo()
         {
-            return $"В стране {Nazva} ";
+            return $"{Nazva}";
         }
     }
 
@@ -71,7 +66,7 @@ namespace Zadanie7A_Plarium
 
         public override string GetInfo()
         {
-            return $"В городе {Nazva} ";
+            return $"{Nazva}";
         }
     }
 }
