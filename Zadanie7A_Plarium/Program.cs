@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using System.Text.Json;
 using System.IO;
 using System.Xml.Serialization;
+using System.Runtime.Serialization.Formatters.Binary;
 
 namespace Zadanie7A_Plarium
 {
@@ -13,20 +14,21 @@ namespace Zadanie7A_Plarium
     {
         static void Main(string[] args)
         {
-            DataBase dataBase=new DataBase();
+            DataBase dataBase=new DataBase();//создаем БД
             Pogoda wether = new Pogoda();
+            //добавление в делегат методов установки начальных значений
             AddStartValue addStartValue;
             addStartValue = Cleener;
             addStartValue += AddPeoples;
             addStartValue += AddRegion;
             addStartValue += AddWether;
             #region Обработка нажатия клавиши
-            KeyEvent evnt = new KeyEvent();
+            KeyEvent evnt = new KeyEvent();//событие нажатия клавиши
             evnt.KeyDown += async (sender, e) =>
             {
                 switch (e.ch)
                 {
-                    case '1':
+                    case '1'://устанавливаем начальные значения
                         {
                             try
                             {
@@ -45,7 +47,8 @@ namespace Zadanie7A_Plarium
                             try
                             {    
                                 bool Test = false;
-                                using (StreamReader sr = new StreamReader("People.txt", System.Text.Encoding.Default))
+                                //проверяем файл SeriaState.txt, если состояние истино то востанавливаем из серриолизации, иначе из БД
+                                using (StreamReader sr = new StreamReader("SeriaState.txt", System.Text.Encoding.Default))
                                 {
                                     string line;
                                   
@@ -57,8 +60,8 @@ namespace Zadanie7A_Plarium
                                     }
 
                                 }
-                                if (Test) dataBase.DeSerialize(dataBase);
-                                else dataBase.GetToColection();
+                                if (Test) dataBase= LoadFromBinaryFile("dataBase.dat");//рассериализация
+                                else dataBase.GetToColection();//из БД
                             }
                             catch
                             {
@@ -69,7 +72,7 @@ namespace Zadanie7A_Plarium
                         }
                     case '3':
                         {
-                            wether.Notify += AddToReturnFile;
+                            wether.Notify += AddToReturnFile;//подписываемся на события вывода(если не подписаться в консоль метод ничего не выведет)
                             try
                             {
                                 wether.GetPogoda(dataBase.pogodas, dataBase.regions[0]);//Вывести сведения о погоде в заданном регионе.
@@ -79,12 +82,12 @@ namespace Zadanie7A_Plarium
                                 Console.WriteLine($" Еще не установлены значения");
                             }
 
-                            wether.Notify -= AddToReturnFile;
+                            wether.Notify -= AddToReturnFile;//отписываемся от события
                             break;
                         }
                     case '4':
                         {
-                            wether.Notify += AddToReturnFile;
+                            wether.Notify += AddToReturnFile;//подписываемся на событие
                             try
                             {
                                 wether.GetData(dataBase.pogodas, dataBase.regions[1], "Снег", 0);// Вывести даты, когда в заданном регионе шел снег и температура была ниже заданной отрицательной.
@@ -94,12 +97,12 @@ namespace Zadanie7A_Plarium
                                 Console.WriteLine($" Еще не установлены значения");
                             }
 
-                            wether.Notify -= AddToReturnFile;
+                            wether.Notify -= AddToReturnFile;//отписываемся от события
                             break;
                         }
                     case '5':
                         {
-                            wether.Notify += AddToReturnFile;
+                            wether.Notify += AddToReturnFile;//подписываемся на событие
                             try
                             {
                                 wether.GetPogoda(dataBase.pogodas, "английский");//Вывести информацию о погоде за прошедшую неделю в регионах, жители которых общаются на заданном языке.
@@ -109,12 +112,12 @@ namespace Zadanie7A_Plarium
                                 Console.WriteLine($" Еще не установлены значения");
                             }
 
-                            wether.Notify -= AddToReturnFile;
+                            wether.Notify -= AddToReturnFile;//отписываемся от события
                             break;
                         }
                     case '6':
                         {
-                            wether.Notify += AddToReturnFile;
+                            wether.Notify += AddToReturnFile;//подписываемся на событие
                             try
                             {
                                 wether.GetTemp(dataBase.pogodas, 6000, dataBase.regions);//Вывести среднюю температуру за прошедшую неделю в регионах с площадью больше заданной.
@@ -124,18 +127,14 @@ namespace Zadanie7A_Plarium
                                 Console.WriteLine($" Еще не установлены значения");
                             }
 
-                            wether.Notify -= AddToReturnFile;
+                            wether.Notify -= AddToReturnFile;//отписываемся от события
                             break;
                         }
-                    case '7':
+                    case '7'://серриализируем БД в файл
                         {
                             try
                             {
-                                XmlSerializer serializer = new XmlSerializer(typeof(DataBase));
-                                using (FileStream fs = new FileStream("DataBase.xml", FileMode.OpenOrCreate))
-                                {
-                                    serializer.Serialize(fs, dataBase);
-                                }
+                                SaveBinaryFormat(dataBase, "dataBase.dat");
                                 using (System.IO.StreamWriter file = new System.IO.StreamWriter("SeriaState.txt"))
                             {
 
@@ -146,19 +145,19 @@ namespace Zadanie7A_Plarium
                             }
                             catch
                             {
-
+                                Console.WriteLine($"Ошибка");
                             }
                             
                             
                             break;
                         }
-                    case '0':
+                    case '0'://завершение
                         {
  
                             Console.WriteLine($"Программа завершена");
                             break;
                         }
-                    default:
+                    default://неизвестные значения
                         {
                             Console.WriteLine($"такого значения не предусмотрено");
                             break;
@@ -173,10 +172,10 @@ namespace Zadanie7A_Plarium
                 $"4-Вывести даты, когда в заданном регионе шел снег и температура была ниже заданной отрицательной\n" +
                 $"5-Вывести информацию о погоде за прошедшую неделю в регионах, жители которых общаются на заданном языке\n" +
                 $"6-Вывести среднюю температуру за прошедшую неделю в регионах с площадью больше заданной\n" +
-                $"7-Рассериализовать\n" +
+                $"7-сериализовать\n" +
                 $"0-Выход\n");
             char ch;
-            do
+            do//обработка пока не будет нажат выход(0)
             {
                 Console.Write("Введите комманду: ");
                 ConsoleKeyInfo key;
@@ -218,9 +217,9 @@ namespace Zadanie7A_Plarium
             #endregion
         }
 
-        private static void DisplayMessage(string message) => Console.WriteLine(message);
+        private static void DisplayMessage(string message) => Console.WriteLine(message);//метод для вывода который передаем в делегат события
 
-        delegate void AddStartValue();
+        delegate void AddStartValue();//делегат стартовых значений
         private static void AddToReturnFile(string s)
         {
             using (System.IO.StreamWriter file = new System.IO.StreamWriter("Return.txt",true))
@@ -230,7 +229,7 @@ namespace Zadanie7A_Plarium
 
                 file.Close();
             }
-        }
+        }//метод для вывода в файл  который передаем в делегат события
 
         private static void Cleener()
         {
@@ -238,7 +237,27 @@ namespace Zadanie7A_Plarium
             System.IO.File.WriteAllBytes("Region.txt", new byte[0]);
             System.IO.File.WriteAllBytes("Pogoda.txt", new byte[0]);
             System.IO.File.WriteAllBytes("Return.txt", new byte[0]);
+        }//метод очистки
+        static void SaveBinaryFormat(object objGraph, string fileName)// метод сериализации
+        {
+            BinaryFormatter binFormat = new BinaryFormatter();
+            using (Stream fStream = new FileStream(fileName, FileMode.Create, FileAccess.Write, FileShare.None))
+            {
+                binFormat.Serialize(fStream, objGraph);
+            }
+            Console.WriteLine("--> Сохранение объекта в Binary format");
         }
-
+        static DataBase LoadFromBinaryFile(string fileName)//метод десериализации
+        {
+            BinaryFormatter binFormat = new BinaryFormatter();
+            DataBase dataBaseerial;
+            using (Stream fStream = File.OpenRead(fileName))
+            {
+                dataBaseerial =
+                     (DataBase)binFormat.Deserialize(fStream);
+                
+            }
+            return dataBaseerial;
+        }
     }
 }
